@@ -1,0 +1,64 @@
+name: "Create cluster using KinD"
+on: pull_request
+
+jobs:
+  kind:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+    - uses: engineerd/setup-kind@v0.1.0
+      with:
+        version: v0.5.1
+    - name: Testing
+      run: |
+        export KUBECONFIG="$(kind get kubeconfig-path)"
+        kubectl cluster-info
+        kubectl get pods -n kube-system
+
+
+  build:
+    using: docker
+    image: orangeopensource/casskop-build:v0.9.0
+    # working_directory: /home/circleci/cassandra-k8s-operator
+    # executor: casskop-build
+    steps:
+    - uses: actions/checkout@master
+    # - restore_cache:
+    #     keys:
+    #       - build-{{ .Branch }}
+    #       - build
+
+    - name: Download dependencies
+      run: if [ ! -d vendor ]; then go mod download; fi
+
+    - name: Vendor dependencies
+      run: if [ ! -d vendor ]; then go mod vendor; fi
+
+    - name: Build Cassandra Operator
+      run: make build
+
+    # - persist_to_workspace:
+    #     root: ./
+    #     paths:
+    #       - build/_output
+    #       - pkg/apis/db/v1alpha1/zz_generated.deepcopy.go
+    #       - pkg/apis/db/v1alpha1/zz_generated.deepcopy.go
+    #       - vendor
+
+    # - name: Push image to Docker Hub
+    #   run: |
+    #     if [[ $(echo "$CIRCLE_BRANCH" | grep -c "pull") -gt 0 ]]; then
+    #       echo "This is a PR, we don't push to Hub."
+    #     else
+    #       docker login --username $DOCKERHUB_USER --password $DOCKERHUB_PASSWORD
+    #       make push
+    #     fi
+
+    # - save_cache:
+    #     name: Save build artefacts in cache
+    #     key: build-{{ .Branch }}-{{ checksum "go.sum" }}
+    #     paths:
+    #       - build/_output
+    #       - pkg/apis/db/v1alpha1/zz_generated.deepcopy.go
+    #       - pkg/apis/db/v1alpha1/zz_generated.deepcopy.go
+    #       - vendor
