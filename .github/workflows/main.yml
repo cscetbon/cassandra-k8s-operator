@@ -17,12 +17,13 @@ jobs:
 
 
   build:
-    using: docker
-    image: orangeopensource/casskop-build:v0.9.0
     # working_directory: /home/circleci/cassandra-k8s-operator
     # executor: casskop-build
+    runs-on: ubuntu-18.04
     steps:
     - uses: actions/checkout@master
+    - uses: docker://orangeopensource/casskop-build:v0.9.0
+
     # - restore_cache:
     #     keys:
     #       - build-{{ .Branch }}
