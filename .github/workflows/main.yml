@@ -22,7 +22,6 @@ jobs:
     runs-on: ubuntu-18.04
     steps:
     - uses: actions/checkout@master
-    - uses: docker://orangeopensource/casskop-build:v0.9.0
 
     # - restore_cache:
     #     keys:
@@ -30,12 +29,15 @@ jobs:
     #       - build
 
     - name: Download dependencies
+      uses: docker://orangeopensource/casskop-build:v0.9.0
       run: if [ ! -d vendor ]; then go mod download; fi
 
     - name: Vendor dependencies
+      uses: docker://orangeopensource/casskop-build:v0.9.0
       run: if [ ! -d vendor ]; then go mod vendor; fi
 
     - name: Build Cassandra Operator
+      uses: docker://orangeopensource/casskop-build:v0.9.0
       run: make build
 
     # - persist_to_workspace:
