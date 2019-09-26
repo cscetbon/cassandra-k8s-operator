@@ -20,6 +20,7 @@ jobs:
     # working_directory: /home/circleci/cassandra-k8s-operator
     # executor: casskop-build
     runs-on: ubuntu-18.04
+    # runs-on: docker://orangeopensource/casskop-build:v0.9.0
     steps:
     - uses: actions/checkout@master
 
@@ -29,16 +30,43 @@ jobs:
     #       - build
 
     - name: Download dependencies
-      uses: docker://orangeopensource/casskop-build:v0.9.0
-      run: if [ ! -d vendor ]; then go mod download; fi
+      run: |
+        docker run \
+        --workdir /github/workspace --rm \
+        -e HOME -e GITHUB_REF -e GITHUB_SHA -e GITHUB_REPOSITORY -e GITHUB_ACTOR -e GITHUB_WORKFLOW \
+        -e GITHUB_HEAD_REF -e GITHUB_BASE_REF -e GITHUB_EVENT_NAME -e GITHUB_WORKSPACE -e GITHUB_ACTION \
+        -e GITHUB_EVENT_PATH -e RUNNER_OS -e RUNNER_TOOL_CACHE -e RUNNER_TEMP -e RUNNER_WORKSPACE \
+        -v /var/run/docker.sock:/var/run/docker.sock \
+        -v /home/runner/work/_temp/_github_home:/github/home \
+        -v /home/runner/work/_temp/_github_workflow:/github/workflow \
+        -v /home/runner/work/cassandra-k8s-operator/cassandra-k8s-operator:/github/workspace \
+        orangeopensource/casskop-build:v0.9.0 /bin/bash -c "[[ ! -d vendor ]] && go mod download"
 
     - name: Vendor dependencies
-      uses: docker://orangeopensource/casskop-build:v0.9.0
-      run: if [ ! -d vendor ]; then go mod vendor; fi
+      run: |
+        docker run \
+        --workdir /github/workspace --rm \
+        -e HOME -e GITHUB_REF -e GITHUB_SHA -e GITHUB_REPOSITORY -e GITHUB_ACTOR -e GITHUB_WORKFLOW \
+        -e GITHUB_HEAD_REF -e GITHUB_BASE_REF -e GITHUB_EVENT_NAME -e GITHUB_WORKSPACE -e GITHUB_ACTION \
+        -e GITHUB_EVENT_PATH -e RUNNER_OS -e RUNNER_TOOL_CACHE -e RUNNER_TEMP -e RUNNER_WORKSPACE \
+        -v /var/run/docker.sock:/var/run/docker.sock \
+        -v /home/runner/work/_temp/_github_home:/github/home \
+        -v /home/runner/work/_temp/_github_workflow:/github/workflow \
+        -v /home/runner/work/cassandra-k8s-operator/cassandra-k8s-operator:/github/workspace \
+        orangeopensource/casskop-build:v0.9.0 /bin/bash -c "[[ ! -d vendor ]] && go mod vendor"
 
     - name: Build Cassandra Operator
-      uses: docker://orangeopensource/casskop-build:v0.9.0
-      run: make build
+      run: |
+        docker run \
+        --workdir /github/workspace --rm \
+        -e HOME -e GITHUB_REF -e GITHUB_SHA -e GITHUB_REPOSITORY -e GITHUB_ACTOR -e GITHUB_WORKFLOW \
+        -e GITHUB_HEAD_REF -e GITHUB_BASE_REF -e GITHUB_EVENT_NAME -e GITHUB_WORKSPACE -e GITHUB_ACTION \
+        -e GITHUB_EVENT_PATH -e RUNNER_OS -e RUNNER_TOOL_CACHE -e RUNNER_TEMP -e RUNNER_WORKSPACE \
+        -v /var/run/docker.sock:/var/run/docker.sock \
+        -v /home/runner/work/_temp/_github_home:/github/home \
+        -v /home/runner/work/_temp/_github_workflow:/github/workflow \
+        -v /home/runner/work/cassandra-k8s-operator/cassandra-k8s-operator:/github/workspace \
+        orangeopensource/casskop-build:v0.9.0 /bin/bash -c "make build"
 
     # - persist_to_workspace:
     #     root: ./
