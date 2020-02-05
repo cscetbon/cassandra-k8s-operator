@@ -4,15 +4,15 @@ metadata:
   name: admin-task-pod
   labels:
     app: cassandracluster
-    cassandracluster: cassandra-e2e
+    cassandracluster: cassandra-demo
     cassandraclusters.db.orange.com.dc: dc1
     cassandraclusters.db.orange.com.rack: rack1
+    cluster: casskop
 spec:
   containers:
   - name: cassandra
-    command:
-    - nodetool
-    - listsnapshots
+    command: ["/bin/sh"]
+    args: ["-c", "nodetool -h cassandra-demo-dc1-rack1-0.cassandra-demo status || true"]
     # env:
     # - name: JOLOKIA_USER
     #   valueFrom:
@@ -24,8 +24,17 @@ spec:
     #     secretKeyRef:
     #       key: password
     #       name: jolokia-auth
-    image: cassandra:3.11
   volumes:
   - name: data
     persistentVolumeClaim:
-      claimName: data-cassandra-e2e-dc1-rack1-0
+      claimName: data-cassandra-demo-dc1-rack1-0
+  - name: bootstrap
+    emptyDir: {}
+  - name: extra-lib
+    emptyDir: {}
+  - name: tmp
+    emptyDir: {}
+  - configMap:
+      defaultMode: 493
+      name: cassandra-configmap-v1
+    name: cassandra-config

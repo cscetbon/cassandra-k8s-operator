@@ -5,5 +5,13 @@ commonLabels:
   app: cassandracluster
   cassandracluster: cassandra-e2e
 
+images:
+- name: cassandra
+  newName: ext-dockerio.artifactory.si.francetelecom.fr/orangeopensource/cassandra-image
+  # newTag: 3.11
+- name: bootstrap
+  newName: ext-dockerio.artifactory.si.francetelecom.fr/orangeopensource/cassandra-bootstrap
+  # newTag: 0.1.3
+
 patches:
 - custom-admin-pod.yaml

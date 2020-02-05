@@ -9,24 +9,17 @@ spec:
     - sh
     - -c
     - cp -vr /etc/cassandra/* /bootstrap
-    image: cassandra:latest
+    image: cassandra:3.11
     resources:
       requests: &requests
         cpu: 500m
         memory: 1Gi
       limits: *requests
-    volumeMounts: &volumeMounts
-    - name: data
-      mountPath: /var/lib/cassandra
-      readOnly: true
-    - name: extra-lib
-      mountPath: /extra-lib
-    - name: tmp
-      mountPath: /tmp
+    volumeMounts:
     - name: bootstrap
       mountPath: /bootstrap
   - name: bootstrap
-    image: orangeopensource/cassandra-bootstrap:0.1.3
+    image: bootstrap:0.1.3
     resources:
       requests: *requests
       limits: *requests
@@ -66,18 +59,23 @@ spec:
         fieldRef:
           apiVersion: v1
           fieldPath: metadata.labels['cassandraclusters.db.orange.com.rack']
-    volumeMounts: *volumeMounts
+    volumeMounts:
+    - name: extra-lib
+      mountPath: /extra-lib
+    - name: bootstrap
+      mountPath: /etc/cassandra
+    - name: cassandra-config
+      mountPath: /configmap
   securityContext: &nonRoot
-    fsGroup: 1
     runAsNonRoot: true
     runAsUser: 999
   volumes:
-  - emptyDir: {}
-    name: bootstrap
-  - emptyDir: {}
-    name: extra-lib
-  - emptyDir: {}
-    name: tmp
+  - name: bootstrap
+    emptyDir: {}
+  - name: extra-lib
+    emptyDir: {}
+  - name: tmp
+    emptyDir: {}
   containers:
   - name: cassandra
     image: cassandra:3.11
@@ -91,8 +89,16 @@ spec:
         - IPC_LOCK
       procMount: Default
       readOnlyRootFilesystem: true
-    volumeMounts: *volumeMounts
-    securityContext: *nonRoot
+    volumeMounts:
+    - name: data
+      mountPath: /var/lib/cassandra
+      readOnly: true
+    - name: extra-lib
+      mountPath: /extra-lib
+    - name: tmp
+      mountPath: /tmp
+    - name: bootstrap
+      mountPath: /etc/cassandra
   volumes:
   - name: data
     persistentVolumeClaim:
