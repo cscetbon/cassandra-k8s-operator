@@ -9,6 +9,11 @@ metadata:
     cassandraclusters.db.orange.com.rack: rack1
     cluster: casskop
 spec:
+  initContainers:
+  - name: bootstrap
+    env:
+    - name: POD_IP
+      value: cassandra-demo-dc1-rack1-0
   containers:
   - name: cassandra
     command: ["/bin/sh"]
