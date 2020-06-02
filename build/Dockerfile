@@ -19,7 +19,7 @@ RUN apk add --no-cache curl jq && \
    mv operator-sdk-* /usr/local/bin/operator-sdk && \
    chmod +x /usr/local/bin/operator-sdk
 
-FROM golang:1.13
+FROM golang:1.14
 
 COPY --from=builder /usr/local/bin/operator-sdk /go/bin/operator-sdk
 WORkDIR /source
