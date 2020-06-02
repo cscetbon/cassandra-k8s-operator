@@ -1,44 +1,26 @@
-FROM golang:1.13 as build
+FROM docker:stable AS builder
+MAINTAINER Jan Boonen <jan.boonen@geodan.nl>
 
-ENV GO111MODULE=on
+ARG VERSION="latest"
+ARG OS="linux-gnu"
+ARG MACHINE="x86_64"
 
-RUN useradd -u 1000 casskop
-RUN mkdir -p /tmp && chown casskop /tmp
+RUN apk add --no-cache curl jq && \
+    if [ $VERSION = 'latest' ]; then \
+      echo "Downloading latest version of Operator SDK from Github..." && \
+      curl -sSf https://api.github.com/repos/operator-framework/operator-sdk/releases/latest | \
+          jq -r --arg MACHINE "$MACHINE" --arg OS "$OS" '.assets[] | select(.name | test("^operator-sdk-[v0-9.]+-" + $MACHINE + "-" + $OS + "$")) | .browser_download_url' | \
+          xargs curl -sSfOL; \
+   else \
+      echo "Downloading version $VERSION of Operator SDK from Github..." && \
+      curl -sSfOL "https://github.com/operator-framework/operator-sdk/releases/download/v${VERSION}/operator-sdk-v${VERSION}-${MACHINE}-${OS}"; \
+   fi && \
+   apk del curl jq && \
+   mv operator-sdk-* /usr/local/bin/operator-sdk && \
+   chmod +x /usr/local/bin/operator-sdk
 
-ADD tools tools
-RUN cd tools/health && go build -o ../../health main.go 
+FROM golang:1.13
 
-
-ADD . casskop
-WORKDIR casskop
-
-
-FROM gcr.io/distroless/base
-
-COPY --from=build /etc/passwd /etc/passwd
-COPY --from=build /go/health /
-COPY --from=build /tmp /tmp
-
-LABEL org.opencontainers.image.documentation="https://github.com/Orange-OpenSource/casskop/blob/master/README.md"
-LABEL org.opencontainers.image.authors="Sébastien Allamand <sebastien.allamand@orange.com>"
-LABEL org.opencontainers.image.source="https://github.com/Orange-OpenSource/casskop"
-LABEL org.opencontainers.image.vendor="Orange France - Digital Factory"
-LABEL org.opencontainers.image.version="0.1"
-LABEL org.opencontainers.image.description="Operateur des Gestion de Clusters Cassandra"
-LABEL org.opencontainers.image.url="https://github.com/Orange-OpenSource/casskop"
-LABEL org.opencontainers.image.title="Operateur Cassandra"
-
-LABEL org.label-schema.usage="https://github.com/Orange-OpenSource/casskop/blob/master/README.md"
-LABEL org.label-schema.docker.cmd="/usr/local/bin/casskop"
-LABEL org.label-schema.docker.cmd.devel="N/A"
-LABEL org.label-schema.docker.cmd.test="N/A"
-LABEL org.label-schema.docker.cmd.help="N/A"
-LABEL org.label-schema.docker.cmd.debug="N/A"
-LABEL org.label-schema.docker.params="LOG_LEVEL=define loglevel,RESYNC_PERIOD=period in second to execute resynchronisation,WATCH_NAMESPACE=namespace to watch for cassandraclusters,OPERATOR_NAME=name of the operator instance pod"
-
-# install operator binary
-COPY build/_output/bin/casskop /usr/local/bin/
-
-USER casskop
-
-CMD ["/usr/local/bin/casskop"]
+COPY --from=builder /usr/local/bin/operator-sdk /go/bin/operator-sdk
+WORkDIR /source
+ENTRYPOINT ["/go/bin/operator-sdk"]
